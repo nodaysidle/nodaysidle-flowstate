@@ -35,7 +35,7 @@ final class ScreenTintOverlay: NSPanel {
 
         // Configure layer AFTER view is added to window
         overlayView.wantsLayer = true
-        overlayView.layer?.backgroundColor = NSColor.gray.cgColor
+        overlayView.layer?.backgroundColor = NSColor(calibratedRed: 0.97, green: 0.65, blue: 0.21, alpha: 1.0).cgColor
         overlayView.layer?.opacity = 0
     }
 

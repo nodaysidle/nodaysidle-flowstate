@@ -14,13 +14,12 @@ struct HistoryView: View {
     var body: some View {
         VStack(spacing: 0) {
             if isLoading {
-                ProgressView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                loadingView
             } else if stats.sessions == 0 {
                 emptyStateView
             } else {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 22) {
                         statsSection
                         chartSection
                         sessionsSection
@@ -33,55 +32,78 @@ struct HistoryView: View {
         .task {
             await loadData()
         }
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            Task { await loadData() }
+    }
+
+    private var loadingView: some View {
+        VStack(spacing: 10) {
+            ProgressView()
+            Text("Loading sessions…")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Loading FlowState sessions")
     }
 
     private var emptyStateView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "chart.bar.doc.horizontal")
-                .font(.system(size: 48))
-                .foregroundColor(.secondary)
-            Text("No Sessions Yet")
-                .font(.headline)
-            Text("Start working and your focus sessions will appear here.")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+        VStack(spacing: 18) {
+            ZStack {
+                Circle()
+                    .fill(.green.opacity(0.12))
+                    .frame(width: 86, height: 86)
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .font(.system(size: 34, weight: .semibold))
+                    .foregroundStyle(.green)
+            }
+
+            VStack(spacing: 6) {
+                Text("No Sessions Yet")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                Text("Your sessions will appear here automatically as FlowState observes local activity.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 320)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
+        .padding(32)
     }
 
     private var statsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("All Time")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 10) {
+            SectionHeader(title: "All Time", subtitle: "A compact view of your recorded focus sessions.")
 
-            HStack(spacing: 24) {
-                StatBox(title: "Sessions", value: "\(stats.sessions)")
-                StatBox(title: "Focus Time", value: formatDuration(stats.totalMinutes))
-                StatBox(title: "Avg Score", value: String(format: "%.0f", stats.avgScore))
+            HStack(spacing: 12) {
+                StatBox(title: "Sessions", value: "\(stats.sessions)", systemImage: "rectangle.stack.fill", color: .green)
+                StatBox(title: "Focus Time", value: formatDuration(stats.totalMinutes), systemImage: "clock.fill", color: .blue)
+                StatBox(title: "Avg Focus", value: String(format: "%.0f", stats.avgScore), systemImage: "gauge.with.dots.needle.67percent", color: .orange)
             }
         }
     }
 
     private var chartSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Last 7 Days")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 10) {
+            SectionHeader(title: "Last 7 Days", subtitle: "Daily focus time based on completed sessions.")
 
             Chart(dailyData, id: \.date) { item in
                 BarMark(
                     x: .value("Day", item.date, unit: .day),
                     y: .value("Minutes", item.focusMinutes)
                 )
-                .foregroundStyle(item.focusMinutes > 0 ? Color.green : Color.gray.opacity(0.3))
-                .cornerRadius(4)
+                .foregroundStyle(item.focusMinutes > 0 ? Color.green.gradient : Color.gray.opacity(0.25).gradient)
+                .annotation(position: .top) {
+                    if item.focusMinutes > 0 {
+                        Text("\(Int(item.focusMinutes))m")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
             .chartXAxis {
-                AxisMarks(values: .stride(by: .day)) { value in
+                AxisMarks(values: .stride(by: .day)) { _ in
                     AxisValueLabel(format: .dateTime.weekday(.abbreviated))
                 }
             }
@@ -95,46 +117,58 @@ struct HistoryView: View {
                     }
                 }
             }
-            .frame(height: 150)
+            .frame(height: 160)
+            .padding(12)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .accessibilityLabel("Focus time chart for the last seven days")
+            .accessibilityValue(chartAccessibilitySummary)
         }
     }
 
     private var sessionsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Recent Sessions")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 10) {
+            SectionHeader(title: "Recent Sessions", subtitle: "Latest completed work windows and their focus level.")
 
-            if recentSessions.isEmpty {
-                Text("No sessions recorded yet")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            } else {
-                VStack(spacing: 4) {
-                    ForEach(recentSessions.prefix(10), id: \.id) { session in
-                        SessionRow(session: session)
-                    }
+            VStack(spacing: 6) {
+                ForEach(recentSessions.prefix(10), id: \.id) { session in
+                    SessionRow(session: session)
                 }
             }
         }
     }
 
     private var exportSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Export Data")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 10) {
+            SectionHeader(title: "Export", subtitle: "Download your session history as a spreadsheet or structured data file.")
 
-            HStack(spacing: 12) {
-                Button("Export CSV") {
+            HStack(spacing: 10) {
+                Button {
                     exportCSV()
+                } label: {
+                    Label("Export CSV", systemImage: "tablecells")
                 }
                 .buttonStyle(.bordered)
+                .help("Open a save dialog to export sessions as CSV.")
+                .accessibilityHint("Opens a save dialog to export your FlowState session history as a CSV file.")
 
-                Button("Export JSON") {
+                Button {
                     exportJSON()
+                } label: {
+                    Label("Export JSON", systemImage: "curlybraces")
                 }
                 .buttonStyle(.bordered)
+                .help("Open a save dialog to export sessions as JSON.")
+                .accessibilityHint("Opens a save dialog to export your FlowState session history as a JSON file.")
             }
         }
+        .padding(14)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var chartAccessibilitySummary: String {
+        let nonZeroDays = dailyData.filter { $0.focusMinutes > 0 }.count
+        let total = dailyData.reduce(0) { $0 + $1.focusMinutes }
+        return "\(nonZeroDays) active days, \(Int(total)) total focus minutes."
     }
 
     private func loadData() async {
@@ -206,24 +240,50 @@ struct HistoryView: View {
     }
 }
 
+private struct SectionHeader: View {
+    let title: String
+    let subtitle: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.headline)
+            Text(subtitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
 struct StatBox: View {
     let title: String
     let value: String
+    let systemImage: String
+    let color: Color
 
     var body: some View {
-        VStack(spacing: 4) {
-            Text(value)
-                .font(.title2)
-                .fontWeight(.semibold)
-                .monospacedDigit()
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
+        VStack(alignment: .leading, spacing: 10) {
+            Image(systemName: systemImage)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(color)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(value)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .monospacedDigit()
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-        .background(Color.gray.opacity(0.1))
-        .cornerRadius(8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(color.opacity(0.16), lineWidth: 1)
+        }
     }
 }
 
@@ -231,13 +291,17 @@ struct SessionRow: View {
     let session: SessionRecord
 
     var body: some View {
-        HStack {
+        HStack(spacing: 12) {
+            Circle()
+                .fill(scoreColor(session.averageFocusScore).opacity(0.18))
+                .frame(width: 10, height: 10)
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(session.startTime, style: .time)
-                    .font(.caption)
+                    .font(.callout)
                     .fontWeight(.medium)
                 Text(formatDuration(session.duration))
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundColor(.secondary)
             }
 
@@ -245,21 +309,24 @@ struct SessionRow: View {
 
             HStack(spacing: 8) {
                 if session.breakWasSuggested {
-                    Image(systemName: session.suggestionWasFollowed == true ? "checkmark.circle.fill" : "xmark.circle")
+                    Image(systemName: session.suggestionWasFollowed == true ? "checkmark.circle.fill" : "minus.circle")
                         .foregroundColor(session.suggestionWasFollowed == true ? .green : .orange)
                         .font(.caption)
+                        .help(session.suggestionWasFollowed == true ? "Break suggestion followed." : "Break suggestion skipped or unresolved.")
                 }
 
                 Text("\(Int(session.averageFocusScore))")
-                    .font(.caption)
-                    .fontWeight(.medium)
+                    .font(.callout)
+                    .fontWeight(.semibold)
+                    .monospacedDigit()
                     .foregroundColor(scoreColor(session.averageFocusScore))
+                    .accessibilityLabel("Average focus")
+                    .accessibilityValue("\(Int(session.averageFocusScore)) out of 100")
             }
         }
-        .padding(.vertical, 4)
-        .padding(.horizontal, 8)
-        .background(Color.gray.opacity(0.05))
-        .cornerRadius(4)
+        .padding(.vertical, 9)
+        .padding(.horizontal, 12)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private func formatDuration(_ seconds: TimeInterval) -> String {
@@ -278,5 +345,5 @@ struct SessionRow: View {
 
 #Preview {
     HistoryView(dataStore: ActivityDataStore())
-        .frame(width: 400, height: 500)
+        .frame(width: 460, height: 560)
 }

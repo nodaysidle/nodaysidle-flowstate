@@ -9,7 +9,7 @@ struct SettingsView: View {
         TabView {
             FocusSettingsTab()
                 .tabItem {
-                    Label("Focus", systemImage: "brain.head.profile")
+                    Label("Focus", systemImage: "target")
                 }
 
             TintSettingsTab()
@@ -19,20 +19,21 @@ struct SettingsView: View {
 
             BreakSettingsTab()
                 .tabItem {
-                    Label("Breaks", systemImage: "pause.circle")
+                    Label("Breaks", systemImage: "cup.and.saucer.fill")
                 }
 
             HistoryView(dataStore: dataStore)
                 .tabItem {
-                    Label("History", systemImage: "chart.bar.xaxis")
+                    Label("History", systemImage: "chart.xyaxis.line")
                 }
 
             GeneralSettingsTab()
                 .tabItem {
-                    Label("General", systemImage: "gear")
+                    Label("General", systemImage: "gearshape.fill")
                 }
         }
-        .frame(minWidth: 480, idealWidth: 540, minHeight: 400, idealHeight: 460)
+        .tint(.green)
+        .frame(minWidth: 520, idealWidth: 600, minHeight: 440, idealHeight: 520)
     }
 }
 
@@ -46,22 +47,25 @@ struct FocusSettingsTab: View {
     var body: some View {
         Form {
             Section {
-                HStack {
-                    Text("Idle Threshold")
-                    Spacer()
-                    Picker("", selection: $idleThreshold) {
-                        Text("20 (Sensitive)").tag(20)
-                        Text("30 (Balanced)").tag(30)
-                        Text("40 (Relaxed)").tag(40)
+                SettingsRow(
+                    title: "Focus Sensitivity",
+                    subtitle: "How quickly FlowState reacts to dips in activity."
+                ) {
+                    Picker("Focus Sensitivity", selection: $idleThreshold) {
+                        Text("Sensitive").tag(20)
+                        Text("Balanced").tag(30)
+                        Text("Relaxed").tag(40)
                     }
                     .labelsHidden()
                     .frame(width: 150)
+                    .help("Sensitive reacts sooner. Relaxed waits for a clearer activity drop.")
                 }
 
-                HStack {
-                    Text("Idle Trigger")
-                    Spacer()
-                    Picker("", selection: $idleTriggerDuration) {
+                SettingsRow(
+                    title: "Inactivity Delay",
+                    subtitle: "How long activity can pause before tinting begins."
+                ) {
+                    Picker("Inactivity Delay", selection: $idleTriggerDuration) {
                         Text("5 seconds").tag(5.0)
                         Text("10 seconds").tag(10.0)
                         Text("15 seconds").tag(15.0)
@@ -69,23 +73,26 @@ struct FocusSettingsTab: View {
                     }
                     .labelsHidden()
                     .frame(width: 150)
+                    .help("Choose how long FlowState waits before treating inactivity as a focus drop.")
                 }
 
-                HStack {
-                    Text("Recovery Time")
-                    Spacer()
-                    Picker("", selection: $recoveryDuration) {
+                SettingsRow(
+                    title: "Recovery Window",
+                    subtitle: "How long steady activity should clear a dimming nudge."
+                ) {
+                    Picker("Recovery Window", selection: $recoveryDuration) {
                         Text("3 seconds").tag(3.0)
                         Text("5 seconds").tag(5.0)
                         Text("10 seconds").tag(10.0)
                     }
                     .labelsHidden()
                     .frame(width: 150)
+                    .help("Shorter recovery clears the tint faster after activity returns.")
                 }
             } header: {
                 Text("Focus Detection")
             } footer: {
-                Text("Controls when the screen tint activates based on your activity level.")
+                Text("FlowState estimates focus locally from keyboard and mouse activity. Nothing is uploaded.")
                     .foregroundStyle(.secondary)
             }
         }
@@ -103,20 +110,26 @@ struct TintSettingsTab: View {
     var body: some View {
         Form {
             Section {
-                HStack {
-                    Text("Tint Intensity")
-                    Spacer()
-                    Slider(value: $tintIntensity, in: 0.3...0.8, step: 0.1)
-                        .frame(width: 150)
-                    Text("\(Int(tintIntensity * 100))%")
-                        .frame(width: 40, alignment: .trailing)
-                        .monospacedDigit()
+                SettingsRow(
+                    title: "Tint Strength",
+                    subtitle: "How visible the screen dimming should be."
+                ) {
+                    HStack(spacing: 10) {
+                        Slider(value: $tintIntensity, in: 0.3...0.8, step: 0.1)
+                            .frame(width: 150)
+                            .help("Control how strongly FlowState dims the screen.")
+                        Text("\(Int(tintIntensity * 100))%")
+                            .frame(width: 42, alignment: .trailing)
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
-                HStack {
-                    Text("Fade Duration")
-                    Spacer()
-                    Picker("", selection: $tintAnimationDuration) {
+                SettingsRow(
+                    title: "Fade Speed",
+                    subtitle: "How gradually the screen tint appears."
+                ) {
+                    Picker("Fade Speed", selection: $tintAnimationDuration) {
                         Text("10 seconds").tag(10.0)
                         Text("30 seconds").tag(30.0)
                         Text("60 seconds").tag(60.0)
@@ -124,11 +137,12 @@ struct TintSettingsTab: View {
                     }
                     .labelsHidden()
                     .frame(width: 150)
+                    .help("A slower fade feels calmer; a faster fade is easier to notice.")
                 }
             } header: {
                 Text("Screen Tint")
             } footer: {
-                Text("The dimming overlay that gently reminds you to take a break.")
+                Text("A warm, low-friction visual nudge that helps you notice when focus has drifted.")
                     .foregroundStyle(.secondary)
             }
         }
@@ -147,12 +161,14 @@ struct BreakSettingsTab: View {
         Form {
             Section {
                 Toggle("Smart Break Suggestions", isOn: $breakPredictionEnabled)
+                    .help("Let FlowState suggest breaks based on your work rhythm.")
 
                 if breakPredictionEnabled {
-                    HStack {
-                        Text("Default Session Length")
-                        Spacer()
-                        Picker("", selection: $defaultSessionLength) {
+                    SettingsRow(
+                        title: "Preferred Session Length",
+                        subtitle: "The work interval FlowState uses as a baseline."
+                    ) {
+                        Picker("Preferred Session Length", selection: $defaultSessionLength) {
                             Text("25 minutes").tag(25.0)
                             Text("45 minutes").tag(45.0)
                             Text("50 minutes").tag(50.0)
@@ -161,17 +177,20 @@ struct BreakSettingsTab: View {
                         }
                         .labelsHidden()
                         .frame(width: 150)
+                        .help("Choose the session length that best matches your work rhythm.")
                     }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             } header: {
-                Text("Break Predictions")
+                Text("Break Rhythm")
             } footer: {
-                Text("FlowState learns your work rhythm and suggests breaks at optimal times.")
+                Text("FlowState tracks your work rhythm and suggests well-timed breaks.")
                     .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
         .padding()
+        .animation(.easeInOut(duration: 0.18), value: breakPredictionEnabled)
     }
 }
 
@@ -179,16 +198,24 @@ struct BreakSettingsTab: View {
 
 struct GeneralSettingsTab: View {
     @AppStorage("launchAtLogin") private var launchAtLogin: Bool = false
+    @State private var loginItemError: String?
 
     var body: some View {
         Form {
             Section {
                 Toggle("Launch at Login", isOn: $launchAtLogin)
+                    .help("Start FlowState automatically when you sign in.")
                     .onChange(of: launchAtLogin) { _, newValue in
                         updateLoginItem(enabled: newValue)
                     }
+
+                if let loginItemError {
+                    Label(loginItemError, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
             } header: {
-                Text("System")
+                Text("Startup")
             }
 
             Section {
@@ -199,9 +226,13 @@ struct GeneralSettingsTab: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Link("View on GitHub", destination: URL(string: "https://github.com/nodaysidle/nodaysidle-flowstate")!)
+                Link("View Source on GitHub", destination: URL(string: "https://github.com/nodaysidle/nodaysidle-flowstate")!)
+                    .help("Open the FlowState source repository.")
             } header: {
                 Text("About")
+            } footer: {
+                Text("FlowState is local-first. Activity data is stored on this Mac.")
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
@@ -209,7 +240,7 @@ struct GeneralSettingsTab: View {
     }
 
     private var appVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.1"
     }
 
     private func updateLoginItem(enabled: Bool) {
@@ -219,9 +250,34 @@ struct GeneralSettingsTab: View {
             } else {
                 try SMAppService.mainApp.unregister()
             }
+            loginItemError = nil
         } catch {
-            print("Failed to update login item: \(error)")
+            loginItemError = "Could not update Launch at Login. Try again from System Settings."
+            launchAtLogin.toggle()
         }
+    }
+}
+
+private struct SettingsRow<Control: View>: View {
+    let title: String
+    let subtitle: String
+    @ViewBuilder let control: Control
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 16) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .fontWeight(.medium)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 16)
+            control
+        }
+        .padding(.vertical, 2)
     }
 }
 
