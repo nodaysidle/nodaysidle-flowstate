@@ -27,8 +27,8 @@ Traditional Pomodoro timers interrupt you at fixed intervals regardless of your 
 ## Features
 
 - **Activity-Based Focus Detection** — Monitors keyboard and mouse activity to calculate a real-time focus score
-- **Smart Screen Tint** — Gently desaturates your screen when focus drops, creating a subtle visual cue to take a break
-- **ML-Powered Break Predictions** — Learns your optimal work rhythm and suggests breaks at the right moments
+- **Smart Screen Dimming** — Gently dims your screen when focus drops, creating a subtle visual cue to take a break
+- **Adaptive Break Suggestions** — Uses recent session patterns and focus trends to suggest breaks when they’re actually useful
 - **Liquid-Fill Menu Bar Icon** — Visualizes your current focus level with a smooth, filling indicator
 - **Configurable Settings** — Fine-tune detection sensitivity, tint intensity, and break preferences
 - **Privacy-First** — All processing happens on-device. No data leaves your Mac.
@@ -36,9 +36,11 @@ Traditional Pomodoro timers interrupt you at fixed intervals regardless of your 
 ## How It Works
 
 1. **Focus Score Engine** — Analyzes keyboard keystroke frequency and mouse movement patterns to generate a 0-100 focus score
-2. **Idle Detection** — When your focus drops below a threshold for a sustained period, the screen gradually desaturates
-3. **Session Tracking** — Tracks your work sessions and builds a model of your optimal focus duration
-4. **Break Predictions** — Uses your historical patterns to predict when you'll benefit from a break, not when a timer says so
+2. **Idle Detection** — When your focus drops below a threshold for a sustained period, the screen gradually dims
+3. **Session Tracking** — Tracks your work sessions and adapts to your recent behavior
+4. **Break Suggestions** — Uses historical patterns and live focus trends to suggest breaks, not fixed timers
+
+> Note: FlowState v1 uses adaptive heuristics, not a trained ML model, for break suggestions.
 
 ## Installation
 
@@ -47,10 +49,14 @@ Traditional Pomodoro timers interrupt you at fixed intervals regardless of your 
 - macOS 14.0 (Sonoma) or later
 - Apple Silicon (M1/M2/M3/M4) or Intel Mac
 
+### Download
+
+Grab the latest `.dmg` from [GitHub Releases](https://github.com/nodaysidle/nodaysidle-flowstate/releases).
+
 ### Build from Source
 
 ```bash
-git clone https://github.com/salvadalba/nodaysidle-flowstate.git
+git clone https://github.com/nodaysidle/nodaysidle-flowstate.git
 cd nodaysidle-flowstate
 swift build -c release
 ```
@@ -71,9 +77,10 @@ Access settings via the menu bar dropdown → **Settings** button.
 
 | Tab | Options |
 |-----|---------|
-| **Focus** | Idle threshold (20/30/40), Idle trigger duration (5-30s), Recovery time (3-10s) |
-| **Tint** | Tint intensity (30-80%), Fade duration (10s-2min) |
-| **Breaks** | Enable/disable smart break suggestions, Default session length (25-90min) |
+| **Focus** | Idle threshold (20/30/40), Idle trigger duration (5/10/15/30s), Recovery time (3/5/10s) |
+| **Tint** | Dimming intensity (30–80%), Fade duration (10/30/60/120s) |
+| **Breaks** | Smart break suggestions on/off, Default session length (25/45/50/60/90 min) |
+| **History** | Session history and stats |
 | **General** | Launch at login, Version info |
 
 ## Menu Bar
@@ -97,30 +104,32 @@ Click the icon to see:
 - **AppKit** for menu bar and screen overlay
 - **Core Animation** for smooth tint transitions
 - **Observation framework** for reactive state
-- **On-device ML** for break prediction (no external APIs)
+- **Adaptive heuristics** for break suggestions (no external APIs)
 
 ## Architecture
 
 ```
-FlowState/
+Sources/FlowState/
+├── FlowStateApp.swift              # @main app entry, MenuBarExtra, Settings scene
+├── AppState.swift                  # Central @Observable state coordinator
 ├── Models/
-│   ├── ActivitySample.swift      # Data model for activity snapshots
-│   └── UserPreferences.swift     # @AppStorage preferences
+│   ├── ActivitySample.swift        # Activity snapshot model
+│   └── UserPreferences.swift       # Persisted app preferences
 ├── Services/
-│   ├── ActivityMonitorService    # Keyboard/mouse monitoring
-│   ├── FocusScoreEngine          # Focus calculation logic
-│   ├── IdleDetector              # Idle state detection
-│   ├── ScreenTintController      # Overlay management
-│   ├── SessionTracker            # Session history
-│   ├── BreakPredictor            # ML-based break suggestions
-│   └── ActivityDataStore         # Persistence layer
+│   ├── ActivityMonitorService.swift      # Keyboard/mouse activity sampling
+│   ├── AccessibilityPermissionChecker.swift # Accessibility permission polling
+│   ├── FocusScoreEngine.swift            # Focus score calculation
+│   ├── IdleDetector.swift                # Idle state detection
+│   ├── SessionTracker.swift              # Session lifecycle + stats
+│   ├── BreakPredictor.swift              # Adaptive break suggestion heuristic
+│   ├── ScreenTintController.swift        # Tint overlay orchestration
+│   └── ActivityDataStore.swift           # Session persistence
 ├── Views/
-│   ├── MenuBarDropdown           # Menu bar popup UI
-│   ├── MenuBarIconRenderer       # Custom icon drawing
-│   ├── ScreenTintOverlay         # Grayscale overlay window
-│   └── SettingsView              # Settings tabs
-├── AppState.swift                # Central state coordinator
-└── FlowStateApp.swift            # App entry point
+│   ├── MenuBarDropdown.swift       # Menu bar popover UI
+│   ├── MenuBarIconRenderer.swift   # Custom menu bar icon drawing
+│   ├── ScreenTintOverlay.swift     # Dimming overlay window
+│   ├── SettingsView.swift          # Settings tabs
+│   └── HistoryView.swift           # Session history view
 ```
 
 ## Privacy

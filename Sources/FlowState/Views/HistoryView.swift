@@ -33,6 +33,9 @@ struct HistoryView: View {
         .task {
             await loadData()
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await loadData() }
+        }
     }
 
     private var emptyStateView: some View {
@@ -102,7 +105,7 @@ struct HistoryView: View {
                 .font(.headline)
 
             if recentSessions.isEmpty {
-                Text("No sessions today")
+                Text("No sessions recorded yet")
                     .font(.caption)
                     .foregroundColor(.secondary)
             } else {
@@ -136,7 +139,7 @@ struct HistoryView: View {
 
     private func loadData() async {
         dailyData = await dataStore.getDailyFocusTime(days: 7)
-        recentSessions = await dataStore.getSessionsToday().sorted { $0.startTime > $1.startTime }
+        recentSessions = await dataStore.getAllSessions().sorted { $0.startTime > $1.startTime }
         stats = await dataStore.getTotalStats()
         isLoading = false
     }

@@ -8,6 +8,7 @@ struct MenuBarDropdown: View {
     let mouseActive: Bool
     let isTinting: Bool
     let shouldSuggestBreak: Bool
+    let onPromptPermission: () -> Void
     let onOpenSystemSettings: () -> Void
     let onOpenAppSettings: () -> Void
     let onTestTint: () -> Void
@@ -137,10 +138,17 @@ struct MenuBarDropdown: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
 
-            Button("Open System Settings") {
-                onOpenSystemSettings()
+            VStack(alignment: .leading, spacing: 8) {
+                Button("Grant Permission") {
+                    onPromptPermission()
+                }
+                .buttonStyle(.borderedProminent)
+
+                Button("Open System Settings") {
+                    onOpenSystemSettings()
+                }
+                .buttonStyle(.bordered)
             }
-            .buttonStyle(.borderedProminent)
         }
     }
 }
@@ -153,6 +161,7 @@ struct MenuBarDropdown: View {
         mouseActive: false,
         isTinting: false,
         shouldSuggestBreak: false,
+        onPromptPermission: {},
         onOpenSystemSettings: {},
         onOpenAppSettings: {},
         onTestTint: {},
@@ -170,6 +179,7 @@ struct MenuBarDropdown: View {
         mouseActive: true,
         isTinting: false,
         shouldSuggestBreak: true,
+        onPromptPermission: {},
         onOpenSystemSettings: {},
         onOpenAppSettings: {},
         onTestTint: {},
@@ -187,6 +197,7 @@ struct MenuBarDropdown: View {
         mouseActive: false,
         isTinting: false,
         shouldSuggestBreak: false,
+        onPromptPermission: {},
         onOpenSystemSettings: {},
         onOpenAppSettings: {},
         onTestTint: {},

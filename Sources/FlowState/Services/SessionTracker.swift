@@ -11,16 +11,24 @@ final class SessionTracker {
     private var breakWasSuggested = false
 
     private let focusThreshold = 50
-    private let startDuration: TimeInterval = 30  // 30 seconds above threshold to start
+    private let startDuration: TimeInterval
+    private let nowProvider: () -> Date
 
     private var aboveThresholdSince: Date?
 
     private(set) var isInSession = false
     private(set) var currentSessionDuration: TimeInterval = 0
     private(set) var currentSessionAverageScore: Double = 0
+    private(set) var currentTrend: Double = 0
 
-    init(dataStore: ActivityDataStore) {
+    init(
+        dataStore: ActivityDataStore,
+        startDuration: TimeInterval = 30,
+        nowProvider: @escaping () -> Date = Date.init
+    ) {
         self.dataStore = dataStore
+        self.startDuration = startDuration
+        self.nowProvider = nowProvider
     }
 
     func update(score: Int, sample: ActivitySample) {
@@ -29,7 +37,7 @@ final class SessionTracker {
             await dataStore.addSample(sample, focusScore: score)
         }
 
-        let now = Date()
+        let now = nowProvider()
 
         if isInSession {
             // Track session data
@@ -37,6 +45,7 @@ final class SessionTracker {
             currentSessionDuration = now.timeIntervalSince(sessionStartTime ?? now)
             currentSessionAverageScore = sessionSamples.isEmpty ? 0 :
                 Double(sessionSamples.map(\.score).reduce(0, +)) / Double(sessionSamples.count)
+            currentTrend = calculateActivityTrend()
         } else {
             // Check if session should start
             if score >= focusThreshold {
@@ -61,7 +70,7 @@ final class SessionTracker {
     func endSession(suggestionFollowed: Bool?) {
         guard isInSession, let startTime = sessionStartTime else { return }
 
-        let endTime = Date()
+        let endTime = nowProvider()
         let duration = endTime.timeIntervalSince(startTime)
         let avgScore = currentSessionAverageScore
         let peakScore = sessionSamples.map(\.score).max() ?? 0
@@ -98,6 +107,7 @@ final class SessionTracker {
         breakWasSuggested = false
         currentSessionDuration = 0
         currentSessionAverageScore = 0
+        currentTrend = 0
     }
 
     private func resetSession() {
@@ -107,6 +117,7 @@ final class SessionTracker {
         breakWasSuggested = false
         currentSessionDuration = 0
         currentSessionAverageScore = 0
+        currentTrend = 0
         aboveThresholdSince = nil
     }
 

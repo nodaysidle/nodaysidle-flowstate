@@ -32,7 +32,7 @@ struct SettingsView: View {
                     Label("General", systemImage: "gear")
                 }
         }
-        .frame(width: 500, height: 400)
+        .frame(minWidth: 480, idealWidth: 540, minHeight: 400, idealHeight: 460)
     }
 }
 
@@ -128,7 +128,7 @@ struct TintSettingsTab: View {
             } header: {
                 Text("Screen Tint")
             } footer: {
-                Text("The grayscale overlay that gently reminds you to take a break.")
+                Text("The dimming overlay that gently reminds you to take a break.")
                     .foregroundStyle(.secondary)
             }
         }
@@ -195,17 +195,21 @@ struct GeneralSettingsTab: View {
                 HStack {
                     Text("Version")
                     Spacer()
-                    Text("1.0.0")
+                    Text(appVersion)
                         .foregroundStyle(.secondary)
                 }
 
-                Link("View on GitHub", destination: URL(string: "https://github.com/salvadalba/nodaysidle-flowstate")!)
+                Link("View on GitHub", destination: URL(string: "https://github.com/nodaysidle/nodaysidle-flowstate")!)
             } header: {
                 Text("About")
             }
         }
         .formStyle(.grouped)
         .padding()
+    }
+
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
     }
 
     private func updateLoginItem(enabled: Bool) {

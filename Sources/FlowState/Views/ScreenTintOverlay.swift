@@ -39,34 +39,43 @@ final class ScreenTintOverlay: NSPanel {
         overlayView.layer?.opacity = 0
     }
 
-    func animateDesaturation(duration: TimeInterval, intensity: Float) {
+    func animateDimming(duration: TimeInterval, intensity: Float) {
         guard let layer = overlayView.layer else { return }
 
-        // Set model value first
-        CATransaction.begin()
-        CATransaction.setDisableActions(true)
-        layer.opacity = 0.0
-        CATransaction.commit()
-
-        // Then animate
         let animation = CABasicAnimation(keyPath: "opacity")
-        animation.fromValue = 0.0
+        animation.fromValue = layer.presentation()?.opacity ?? layer.opacity
         animation.toValue = intensity
         animation.duration = duration
         animation.timingFunction = CAMediaTimingFunction(name: .easeIn)
-        animation.fillMode = .forwards
-        animation.isRemovedOnCompletion = false
 
-        layer.add(animation, forKey: "desaturation")
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        layer.opacity = intensity
+        CATransaction.commit()
+
+        layer.add(animation, forKey: "dimming")
     }
 
-    func clearTint() {
-        guard let layer = overlayView.layer else { return }
-        layer.removeAllAnimations()
+    func clearTint(duration: TimeInterval = 1.0, completion: (() -> Void)? = nil) {
+        guard let layer = overlayView.layer else {
+            completion?()
+            return
+        }
+
+        let animation = CABasicAnimation(keyPath: "opacity")
+        animation.fromValue = layer.presentation()?.opacity ?? layer.opacity
+        animation.toValue = 0.0
+        animation.duration = duration
+        animation.timingFunction = CAMediaTimingFunction(name: .easeOut)
 
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         layer.opacity = 0
+        CATransaction.commit()
+
+        CATransaction.begin()
+        CATransaction.setCompletionBlock(completion)
+        layer.add(animation, forKey: "clearDimming")
         CATransaction.commit()
     }
 }

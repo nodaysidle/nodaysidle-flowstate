@@ -29,10 +29,16 @@ actor ActivityDataStore {
     private var sessions: [SessionRecord] = []
 
     private let maxSampleAge: TimeInterval = 7 * 24 * 60 * 60  // 7 days
+    private let sampleSaveInterval = 10
 
-    init() {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let flowStateDir = appSupport.appendingPathComponent("FlowState", isDirectory: true)
+    init(baseDirectory: URL? = nil) {
+        let flowStateDir: URL
+        if let baseDirectory {
+            flowStateDir = baseDirectory
+        } else {
+            let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            flowStateDir = appSupport.appendingPathComponent("FlowState", isDirectory: true)
+        }
 
         try? FileManager.default.createDirectory(at: flowStateDir, withIntermediateDirectories: true)
 
@@ -81,9 +87,12 @@ actor ActivityDataStore {
         )
         recentSamples.append(stored)
 
-        // Prune old samples periodically
+        // Prune and persist periodically so long sessions survive crashes/restarts.
         if recentSamples.count % 100 == 0 {
             pruneOldSamples()
+        }
+        if recentSamples.count % sampleSaveInterval == 0 {
+            saveData()
         }
     }
 

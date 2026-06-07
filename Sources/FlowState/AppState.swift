@@ -52,9 +52,8 @@ final class AppState {
         // Wire idle detector callbacks
         idleDetector.onIdleStart = { [weak self] in
             self?.tintController.show()
-            // End session when user goes idle
-            let followed = self?.breakPredictor.shouldSuggestBreak ?? false
-            self?.sessionTracker.endSession(suggestionFollowed: followed ? true : nil)
+            // Going idle is not explicit proof that the user followed the break suggestion.
+            self?.sessionTracker.endSession(suggestionFollowed: nil)
         }
         idleDetector.onIdleEnd = { [weak self] in
             self?.tintController.hide()
@@ -65,9 +64,11 @@ final class AppState {
             self?.sessionTracker.markBreakSuggested()
         }
 
+        permissionChecker.promptForPermission()
         permissionChecker.startPolling()
 
         if permissionChecker.hasPermission {
+            permissionChecker.stopPolling()
             startMonitoring()
         }
     }
@@ -106,7 +107,7 @@ final class AppState {
             breakPredictor.update(
                 sessionDuration: sessionTracker.currentSessionDuration,
                 averageScore: sessionTracker.currentSessionAverageScore,
-                trend: 0  // Trend calculated internally by session tracker
+                trend: sessionTracker.currentTrend
             )
         }
     }

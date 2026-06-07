@@ -15,6 +15,9 @@ struct FlowStateApp: App {
                 mouseActive: appState.mouseActive,
                 isTinting: appState.isTinting,
                 shouldSuggestBreak: appState.shouldSuggestBreak,
+                onPromptPermission: {
+                    appState.permissionChecker.promptForPermission()
+                },
                 onOpenSystemSettings: {
                     appState.permissionChecker.openSystemSettings()
                 },
@@ -36,6 +39,7 @@ struct FlowStateApp: App {
             )
             .onChange(of: appState.permissionChecker.hasPermission) { _, hasPermission in
                 if hasPermission {
+                    appState.permissionChecker.stopPolling()
                     appState.startMonitoring()
                 }
             }

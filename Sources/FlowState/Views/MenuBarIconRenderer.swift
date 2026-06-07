@@ -44,7 +44,7 @@ enum MenuBarIconRenderer {
             return true
         }
 
-        image.isTemplate = false
+        image.isTemplate = true
         return image
     }
 
@@ -91,7 +91,7 @@ enum MenuBarIconRenderer {
             return true
         }
 
-        image.isTemplate = false
+        image.isTemplate = true
         return image
     }
 }

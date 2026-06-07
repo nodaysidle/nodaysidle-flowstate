@@ -40,5 +40,6 @@ final class AccessibilityPermissionChecker {
         // (kAXTrustedCheckOptionPrompt is a mutable global in C, unsafe to access directly)
         let options: [String: Any] = ["AXTrustedCheckOptionPrompt": true]
         AXIsProcessTrustedWithOptions(options as CFDictionary)
+        checkPermission()
     }
 }
