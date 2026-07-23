@@ -1,3 +1,5 @@
+<img src=".github/social-preview.png" alt="FlowState — NODAYSIDLE" width="100%">
+
 # FlowState
 
 > A smarter Pomodoro for developers who don't like timers.
@@ -5,10 +7,6 @@
 ![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-black?style=flat-square&logo=apple)
 ![Swift](https://img.shields.io/badge/Swift-6.0-orange?style=flat-square&logo=swift)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-
-<p align="center">
-  <img src="docs/assets/banner.svg" alt="FlowState Banner" width="800">
-</p>
 
 ## Overview
 
