@@ -47,17 +47,20 @@ FlowState v1 uses adaptive heuristics, not a trained ML model, for break suggest
 
 ## Installation
 
-Download the latest `.dmg` from [GitHub Releases](https://github.com/nodaysidle/nodaysidle-flowstate/releases).
+The latest release ([v1.0.2](https://github.com/nodaysidle/nodaysidle-flowstate/releases/tag/v1.0.2)) has no downloadable assets. The newest pre-built app is [`FlowState-1.0.1.dmg`](https://github.com/nodaysidle/nodaysidle-flowstate/releases/download/v1.0.1/FlowState-1.0.1.dmg) ([SHA-256](https://github.com/nodaysidle/nodaysidle-flowstate/releases/download/v1.0.1/FlowState-1.0.1.dmg.sha256)) on [v1.0.1](https://github.com/nodaysidle/nodaysidle-flowstate/releases/tag/v1.0.1):
 
-Build from source:
+```bash
+shasum -a 256 FlowState-1.0.1.dmg
+# expected: 156993e518a9f21fffac53de7c8fc47afe9ebe427425ce63b1acf3eb7131cbe1
+```
+
+Build from source (macOS 14+):
 
 ```bash
 git clone https://github.com/nodaysidle/nodaysidle-flowstate.git
 cd nodaysidle-flowstate
-swift build -c release
+./scripts/package-flowstate.sh   # builds dist/FlowState.app and dist/FlowState-1.0.1.dmg
 ```
-
-The built app will be in `.build/release/FlowState`.
 
 ### Accessibility Permission
 
